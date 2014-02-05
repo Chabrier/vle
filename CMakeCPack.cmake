@@ -43,7 +43,7 @@ else ()
 endif ()
 
 set(CPACK_PACKAGE_INSTALL_DIRECTORY ${VLE_NAME_COMPLETE})
-set(CPACK_PACKAGE_EXECUTABLES "vle" "VLE" "gvle" "GVLE")
+set(CPACK_PACKAGE_EXECUTABLES "vle" "VLE" "gvle" "GVLE" "gvle2" "GVLE2")
 
 # CPack source configuration
 set(CPACK_SOURCE_PACKAGE_FILE_NAME ${VLE_NAME_COMPLETE})
@@ -72,6 +72,7 @@ set(CPACK_RPM_PACKAGE_DESCRIPTION "VLE, a framework for multi-modeling, simulati
 if (CPACK_GENERATOR MATCHES "NSIS")
 
   set(CMAKE_MODULE_PATH "share")
+  set(VLE_QT_PATH CACHE PATH "Qt path")
   set(VLE_MINGW_PATH CACHE PATH "Mingw Boost directory")
   set(VLE_BOOST_INCLUDE_PATH CACHE PATH "Boost include path")
   set(VLE_BOOST_LIBRARIES_PATH CACHE PATH "Boost libraries path")
@@ -97,6 +98,13 @@ if (CPACK_GENERATOR MATCHES "NSIS")
   install(FILES "${VLE_MINGW_PATH}/bin/libbz2-2.dll" DESTINATION bin)
   install(FILES "${VLE_MINGW_PATH}/bin/liblzma-1.dll" DESTINATION bin)
   install(FILES "${VLE_MINGW_PATH}/bin/libz-1.dll" DESTINATION bin)
+
+  install(FILES "${VLE_QT_PATH}\\\\QtCore4.dll"  DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtGui4.dll"   DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtXml4.dll"   DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtCored4.dll" DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtGuid4.dll"  DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtXmld4.dll"  DESTINATION bin)
 
   install(DIRECTORY "${VLE_BOOST_INCLUDE_PATH}/boost" DESTINATION include)
   install(DIRECTORY "${VLE_BOOST_LIBRARIES_PATH}/" DESTINATION bin
@@ -124,6 +132,7 @@ if (CPACK_GENERATOR MATCHES "NSIS")
   set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/share/pixmaps\\\\logo.bmp")
   set(CPACK_NSIS_MENU_LINKS "${VLE_SHARE_DIRS}/doc/vle.chm" "VLE API" "http://www.vle-project.org" "VLE Web Site")
   set(CPACK_CREATE_DESKTOP_LINKS gvle)
+  set(CPACK_CREATE_DESKTOP_LINKS gvle2)
   set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\vle.exe")
   set(CPACK_NSIS_DISPLAY_NAME "VLE - Virtual Laboratory Environment")
   set(CPACK_NSIS_HELP_LINK "http://www.vle-project.org")
