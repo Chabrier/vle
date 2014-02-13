@@ -116,22 +116,25 @@ void GVLE2Win::loadSimulationPluggins()
     QDir pluginsDir = QDir(basePath);
     foreach (QString fileName, pluginsDir.entryList(QDir::Files))
     {
-        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName) );
-        QObject *plugin = loader.instance();
-        if (loader.isLoaded())
-        {
-            PluginSimulator *sim = qobject_cast<PluginSimulator *>(plugin);
-            if (sim) {
-                qDebug() << "    " << sim->getname();
-                mLogger->log(QString("Load simulator pluggin : %1").arg(sim->getname()));
-                mSimulators << pluginsDir.absoluteFilePath(fileName);
-                // Update Menu
-                QAction *newAct = ui->menuSelectSimulator->addAction(sim->getname());
-                newAct->setCheckable(true);
-                newAct->setActionGroup(mMenuSimGroup);
-                QObject::connect(newAct, SIGNAL(toggled(bool)), this, SLOT(onSelectSimulator(bool)));
-                delete(sim);
+        if (QLibrary::isLibrary(fileName) ) {
+            QPluginLoader loader(pluginsDir.absoluteFilePath(fileName) );
+            QObject *plugin = loader.instance();
+            if (loader.isLoaded())
+            {
+                PluginSimulator *sim = qobject_cast<PluginSimulator *>(plugin);
+                if (sim) {
+                    qDebug() << "    " << sim->getname();
+                    mLogger->log(QString("Load simulator pluggin : %1").arg(sim->getname()));
+                    mSimulators << pluginsDir.absoluteFilePath(fileName);
+                    // Update Menu
+                    QAction *newAct = ui->menuSelectSimulator->addAction(sim->getname());
+                    newAct->setCheckable(true);
+                    newAct->setActionGroup(mMenuSimGroup);
+                    QObject::connect(newAct, SIGNAL(toggled(bool)), this, SLOT(onSelectSimulator(bool)));
+                    delete(sim);
+                }
             }
+
         }
     }
     ui->menuSelectSimulator->setEnabled(true);
