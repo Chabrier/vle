@@ -125,7 +125,7 @@ void GVLE2Win::loadSimulationPluggins()
                 if (sim) {
                     qDebug() << "    " << sim->getname();
                     mLogger->log(QString("Load simulator pluggin : %1").arg(sim->getname()));
-                    mSimulators << pluginsDir.absoluteFilePath(fileName);
+                    mSimulators[sim->getname()] = pluginsDir.absoluteFilePath(fileName);
                     // Update Menu
                     QAction *newAct = ui->menuSelectSimulator->addAction(sim->getname());
                     newAct->setCheckable(true);
@@ -325,7 +325,7 @@ void GVLE2Win::onLaunchSimulation()
 
     if ( ! ui->actionSimNone->isChecked())
     {
-        QString pluginPath = mSimulators.at(0);
+        QString pluginPath = mSimulators[mSimulator];
 
         QPluginLoader loader(pluginPath);
         QObject *plugin = loader.instance();
@@ -407,6 +407,7 @@ void GVLE2Win::onSelectSimulator(bool isChecked)
 {
     (void)isChecked;
     QAction *act = (QAction *)sender();
+    mSimulator = act->text();
     (void)act;
 }
 
