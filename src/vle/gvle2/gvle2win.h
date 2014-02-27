@@ -65,7 +65,8 @@ private:
     vle::vpz::Vpz    * mVpz;
     bool               mSimOpened;
     QActionGroup     * mMenuSimGroup;
-    QList <QString>    mSimulators;
+    QMap <QString, QString>    mSimulators;
+    QString            mSimulator;
     PluginSimulator  * mCurrentSim;
 
 protected:
