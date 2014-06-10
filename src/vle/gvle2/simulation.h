@@ -17,6 +17,8 @@
 #include <vle/utils/ModuleManager.hpp>
 #endif
 
+#include <vle/gvle2/vlevpz.h>
+
 #include "logger.h"
 #include "ui_simulationrtool.h"
 
@@ -30,6 +32,7 @@ class simulationThread : public QObject
     Q_OBJECT
 public:
     simulationThread(vle::vpz::Vpz *vpz = 0);
+    simulationThread(vleVpz *vpz = 0);
     ~simulationThread();
     QString getError()
     {
@@ -39,6 +42,8 @@ public:
     void   setPause(bool pause);
     void   forceQuit();
     void   setOutputPath(QString path);
+    double getStartTime();
+    double getDuration();
     double getCurrentTime();
     vle::value::Map    *getOutputs();
     vle::value::Matrix *getMatrix(vle::value::Value *value);
@@ -72,7 +77,7 @@ class simulationView : public QWidget
 public:
     explicit simulationView(QWidget *parent = 0);
     ~simulationView();
-    void setVpz(vle::vpz::Vpz *vpz);
+    void setVpz(vleVpz *vpz);
     void setPackage(vle::utils::Package *pkg)
     {
         mCurrPackage = pkg;

@@ -1,6 +1,5 @@
 #include <QFileDialog>
 #include <QStyleFactory>
-#include <QPluginLoader>
 #include <QActionGroup>
 #include <QMessageBox>
 
@@ -11,6 +10,7 @@
 #include "aboutbox.h"
 #include "filevpzview.h"
 #include "simulation.h"
+#include "vlevpz.h"
 #include <QtDebug>
 #include <iostream>
 
@@ -23,6 +23,7 @@ GVLE2Win::GVLE2Win(QWidget *parent) :
     mLogger = 0;
     mSimOpened = false;
     mOpenedPackage = false;
+    mCurrentSimPlugin = 0;
     // VLE init
     mCurrPackage.refreshPath();
 
@@ -104,6 +105,9 @@ void GVLE2Win::showEvent(QShowEvent *event)
 
 void GVLE2Win::loadSimulationPluggins()
 {
+    //qDebug() << QCoreApplication::libraryPaths();
+    // QCoreApplication::addLibraryPath
+
     QString basePath;
     std::string defPluginPath = vle::utils::Path::path().getHomeFile("plugins");
     QVariant path = mSettings->value("Plugins/path", defPluginPath.c_str());
@@ -116,25 +120,23 @@ void GVLE2Win::loadSimulationPluggins()
     QDir pluginsDir = QDir(basePath);
     foreach (QString fileName, pluginsDir.entryList(QDir::Files))
     {
-        if (QLibrary::isLibrary(fileName) ) {
-            QPluginLoader loader(pluginsDir.absoluteFilePath(fileName) );
-            QObject *plugin = loader.instance();
-            if (loader.isLoaded())
-            {
-                PluginSimulator *sim = qobject_cast<PluginSimulator *>(plugin);
-                if (sim) {
-                    qDebug() << "    " << sim->getname();
-                    mLogger->log(QString("Load simulator pluggin : %1").arg(sim->getname()));
-                    mSimulators[sim->getname()] = pluginsDir.absoluteFilePath(fileName);
-                    // Update Menu
-                    QAction *newAct = ui->menuSelectSimulator->addAction(sim->getname());
-                    newAct->setCheckable(true);
-                    newAct->setActionGroup(mMenuSimGroup);
-                    QObject::connect(newAct, SIGNAL(toggled(bool)), this, SLOT(onSelectSimulator(bool)));
-                    delete(sim);
-                }
+        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName) );
+        QObject *plugin = loader.instance();
+        if (loader.isLoaded())
+        {
+            PluginSimulator *sim = qobject_cast<PluginSimulator *>(plugin);
+            if (sim) {
+                qDebug() << "    " << sim->getname();
+                mLogger->log(QString("Load simulator pluggin : %1").arg(sim->getname()));
+                mSimulators << pluginsDir.absoluteFilePath(fileName);
+                // Update Menu
+                QAction *newAct = ui->menuSelectSimulator->addAction(sim->getname());
+                newAct->setCheckable(true);
+                newAct->setActionGroup(mMenuSimGroup);
+                newAct->setObjectName(sim->getname());
+                newAct->setData(pluginsDir.absoluteFilePath(fileName));
+                QObject::connect(newAct, SIGNAL(toggled(bool)), this, SLOT(onSelectSimulator(bool)));
             }
-
         }
     }
     ui->menuSelectSimulator->setEnabled(true);
@@ -214,6 +216,7 @@ void GVLE2Win::openProject(QString pathName)
     ui->menuProject->setEnabled(true);
 
     mOpenedPackage = true;
+    mProjectPath = dir.dirName();
 }
 
 /**
@@ -321,15 +324,12 @@ void GVLE2Win::onLaunchSimulation()
     if (mSimOpened)
         return;
 
-    fileVpzView *currentVpz = (fileVpzView *)w;
+    fileVpzView *vpzView = (fileVpzView *)w;
 
     if ( ! ui->actionSimNone->isChecked())
     {
-        QString pluginPath = mSimulators[mSimulator];
-
-        QPluginLoader loader(pluginPath);
-        QObject *plugin = loader.instance();
-        if ( ! loader.isLoaded())
+        QObject *plugin = mCurrentSimPlugin->instance();
+        if ( ! mCurrentSimPlugin->isLoaded())
             return;
         PluginSimulator *sim = qobject_cast<PluginSimulator *>(plugin);
         if ( ! sim)
@@ -346,10 +346,10 @@ void GVLE2Win::onLaunchSimulation()
             // Configure Pluggin for the requested VPZ
             newTab->setProperty("type",   QString("simulation"));
             newTab->setProperty("plugin", QString("yes"));
-            newTab->setProperty("vpz",    QVariant::fromValue((void*)currentVpz));
-            currentVpz->used(true);
+            newTab->setProperty("vpz",    QVariant::fromValue((void*)vpzView));
+            vpzView->usedBySim(true);
             try {
-                sim->setVpz(currentVpz->vpz());
+                sim->setVpz(vpzView->vpz());
                 sim->setPackage(&mCurrPackage);
                 // Associate the pluggin widget with a new tab
                 int n = ui->tabWidget->addTab(newTab, "Simulation");
@@ -379,9 +379,9 @@ void GVLE2Win::onLaunchSimulation()
         // Create a new tab
         simulationView * newTab = new simulationView();
         newTab->setProperty("type", QString("simulation"));
-        newTab->setProperty("vpz",  QVariant::fromValue((void*)currentVpz));
-        currentVpz->used(true);
-        newTab->setVpz(currentVpz->vpz());
+        newTab->setProperty("vpz",  QVariant::fromValue((void*)vpzView));
+        vpzView->usedBySim(true);
+        newTab->setVpz(vpzView->vpz());
         newTab->setPackage(&mCurrPackage);
         newTab->setLogger(mLogger);
         newTab->setSettings(mSettings);
@@ -405,10 +405,29 @@ void GVLE2Win::onLaunchSimulation()
 
 void GVLE2Win::onSelectSimulator(bool isChecked)
 {
-    (void)isChecked;
     QAction *act = (QAction *)sender();
-    mSimulator = act->text();
-    (void)act;
+
+    if (isChecked)
+    {
+        if (mCurrentSimPlugin)
+        {
+            delete mCurrentSimPlugin;
+            mCurrentSimPlugin = 0;
+        }
+
+        if (act->objectName() != "actionSimNone")
+        {
+            QString pluginPath = act->data().toString();
+
+            mCurrentSimPlugin = new QPluginLoader(pluginPath);
+            // Try to load instance, to test symbols
+            mCurrentSimPlugin->instance();
+            if ( ! mCurrentSimPlugin->isLoaded())
+                return;
+            // Test ok, unload the plugin to reduce memory usage
+            qDebug() << mCurrentSimPlugin->unload();
+        }
+    }
 }
 
 /**
@@ -539,6 +558,11 @@ void GVLE2Win::onTabChange(int index)
             int toolId = w->property("wTool").toInt();
             ui->rightStack->setCurrentIndex(toolId);
         }
+        else if (isVpz)
+        {
+            int toolId = w->property("wTool").toInt();
+            ui->rightStack->setCurrentIndex(toolId);
+        }
         else
             ui->rightStack->setCurrentIndex(0);
 
@@ -563,17 +587,50 @@ void GVLE2Win::onTabClose(int index)
     if (w == 0)
         return;
 
-    QVariant isPlugin = w->property("plugin");
+    bool isPlugin = false;
+    QVariant vIsPlugin = w->property("plugin");
+    if (vIsPlugin.isValid())
+        isPlugin = (vIsPlugin.toString().compare("yes") == 0);
 
     if (w->property("type").toString().compare("vpz") == 0)
     {
         fileVpzView *tabVpz = (fileVpzView *)w;
-        if (tabVpz->isUsed())
+        int useReason;
+        bool allowClose = false;
+        if (tabVpz->isUsed(&useReason))
         {
             QMessageBox msgBox;
-            msgBox.setText(tr("This tab can't be closed (used by a simulator)"));
-            msgBox.exec();
-            return;
+            if (useReason == 1)
+            {
+                msgBox.setText(tr("This tab can't be closed (used by a simulator)"));
+                msgBox.exec();
+                return;
+            }
+            if (useReason == 2)
+            {
+                msgBox.setText(tr("File modified ! Save before close ?"));
+                msgBox.addButton(QMessageBox::Save);
+                msgBox.addButton(QMessageBox::Discard);
+                msgBox.addButton(QMessageBox::Cancel);
+                int ret = msgBox.exec();
+                switch (ret) {
+                  case QMessageBox::Save:
+                    tabVpz->save();
+                    allowClose = true;
+                    break;
+                  case QMessageBox::Discard:
+                    allowClose = true;
+                    break;
+                  case QMessageBox::Cancel:
+                    allowClose = false;
+                    break;
+                  default:
+                      // should never be reached
+                      break;
+                }
+                if (! allowClose)
+                    return;
+            }
         }
     }
 
@@ -588,7 +645,7 @@ void GVLE2Win::onTabClose(int index)
         {
             void *ptr = linkedVpz.value<void *>();
             fileVpzView *currentVpz = (fileVpzView *)ptr;
-            currentVpz->used(false);
+            currentVpz->usedBySim(false);
         }
 
         ui->actionLaunchSimulation->setEnabled(true);
@@ -598,17 +655,25 @@ void GVLE2Win::onTabClose(int index)
         int toolId = w->property("wTool").toInt();
         wTool = ui->rightStack->widget(toolId);
         ui->rightStack->removeWidget(wTool);
-        delete wTool;
-    }
-    delete w;
+        if (isPlugin)
+            mCurrentSim->delWidgetToolbar();
+        else
+            delete wTool;
 
-    if (isSim && isPlugin.isValid())
-    {
-        if (isPlugin.toString().compare("yes") == 0)
+        if (isPlugin)
         {
-            delete mCurrentSim;
-            mCurrentSim = 0;
+            mCurrentSim->delWidget();
+            w = 0;
         }
+    }
+    if (w)
+        delete w;
+
+    if (isSim && isPlugin)
+    {
+        mCurrentSimPlugin->unload();
+        //delete mCurrentSim;
+        mCurrentSim = 0;
     }
 }
 
@@ -743,8 +808,14 @@ void GVLE2Win::onTreeDblClick(QTreeWidgetItem *item, int column)
     if (selectedFileInfo.suffix() != "vpz")
         return;
 
+#ifdef QTVPZ
+    vleVpz *selVpz;
+    selVpz = new vleVpz(fileName);
+    selVpz->setBasePath(mProjectPath);
+#else
     vle::vpz::Vpz *selectedVpz;
     selectedVpz = new vle::vpz::Vpz(fileName.toStdString());
+#endif
 
     // Search if the selected VPZ has already been opened
     int alreadyOpened = 0;
@@ -771,9 +842,20 @@ void GVLE2Win::onTreeDblClick(QTreeWidgetItem *item, int column)
         // Create a new Tab to display VPZ model
         fileVpzView * newTab = new fileVpzView();
         newTab->setProperty("type", QString("vpz"));
+#ifdef QTVPZ
+        newTab->setVpz(selVpz);
+#else
         newTab->setVpz(selectedVpz);
+#endif
         int n = ui->tabWidget->addTab(newTab, fileName);
         ui->tabWidget->setCurrentIndex(n);
         newTab->show();
+
+        // Create a new toolbox for the right column
+        int nid;
+        QWidget *newRTool = newTab->getTool();
+        nid = ui->rightStack->addWidget(newRTool);
+        ui->rightStack->setCurrentWidget(newRTool);
+        newTab->setProperty("wTool", nid);
     }
 }

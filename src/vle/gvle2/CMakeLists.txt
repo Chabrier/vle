@@ -1,6 +1,8 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
+set(QT_USE_QTXML TRUE)
+
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
 
@@ -20,18 +22,23 @@ include_directories(${VLE_BINARY_DIR}/src ${VLE_SOURCE_DIR}/src
   ${VLE_SOURCE_DIR}/src/apps/gvle2)
 
 SET(GVLE2_SOURCES_CPP gvle2win.cpp aboutbox.cpp help.cpp
-  filevpzview.cpp simulation.cpp widgetprojecttree.cpp logger.cpp)
+  filevpzview.cpp simulation.cpp widgetprojecttree.cpp logger.cpp
+  vlevpz.cpp vlevpzconn.cpp vlevpzdynamic.cpp vlevpzport.cpp vpzexpcond.cpp)
 
 QT4_WRAP_UI(ui_gvle2win_h gvle2win.ui)
 QT4_WRAP_UI(aboutbox_h aboutbox.ui)
 QT4_WRAP_UI(help_h help.ui)
 QT4_WRAP_UI(filevpzview_h filevpzview.ui)
+QT4_WRAP_UI(filevpztooltip_h filevpztooltip.ui)
+QT4_WRAP_UI(filevpzrtool_h   filevpzrtool.ui)
 QT4_WRAP_UI(simulationview_h simulationview.ui)
 QT4_WRAP_UI(simulationrtool_h simulationrtool.ui)
 
 SET(GVLE2_SOURCES_HPP ${ui_gvle2win_h} ${aboutbox_h} ${help_h}
-  ${filevpzview_h} ${simulationview_h} ${simulationrtool_h} logger.h
-  plugin_sim.h)
+  ${filevpzview_h} ${filevpztooltip_h} ${filevpzrtool_h}
+  ${simulationview_h} ${simulationrtool_h} simulation.h logger.h 
+  plugin_sim.h
+  vlevpz.h vlevpzconn.h vlevpzdynamic.h vlevpzport.h vpzexpcond.h )
 
 if (WIN32)
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vfl.o

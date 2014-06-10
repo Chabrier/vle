@@ -47,9 +47,12 @@ simulationView::~simulationView()
     }
 }
 
-void simulationView::setVpz(vle::vpz::Vpz *vpz)
+void simulationView::setVpz(vleVpz *vpz)
 {
-    mVpz = vpz;
+    QString fileName = vpz->getFilename();
+    mVpz = new vle::vpz::Vpz(fileName.toStdString());
+
+    //mVpz = vpz;
     vle::vpz::Observables curVpzObs;
     vle::vpz::Views       curVpzViews;
     vle::vpz::AtomicModelVector curVpzModels;
@@ -290,6 +293,31 @@ void simulationView::onTreeItemSelected()
 
 /* ------------------------- Simulation thread ------------------------- */
 
+simulationThread::simulationThread(vleVpz *vpz)
+{
+    mOutputs = 0;
+    mCurrentState = Wait;
+    if (vpz)
+    {
+        // Instanciate an empty VPZ
+        mVpz = new vle::vpz::Vpz();
+
+        // Get the raw XML of vleVpz
+        QByteArray xml = vpz->xGetXml();
+
+        std::string buffer = (char *)xml.data();
+        mVpz->parseMemory(buffer);
+
+        // Instanciate the root coordinator    ToDo : Plugins
+        mRoot = new vle::devs::RootCoordinator(mLoadedPlugin);
+    }
+    else
+    {
+        mVpz  = 0;
+        mRoot = 0;
+    }
+}
+
 simulationThread::simulationThread(vle::vpz::Vpz *vpz)
 {
     mOutputs = 0;
@@ -346,10 +374,29 @@ vle::value::Matrix *simulationThread::getMatrix(vle::value::Value *value)
 }
 
 /**
- * @brief simulationThread::getOutputs
- *        Get the map of ouputs datas
+ * @brief simulationThread::getStartTime
+ *        Return the timestamp of experiment begin
  *
- * This method can be executed in both threads
+ */
+double simulationThread::getStartTime()
+{
+    return mVpz->project().experiment().begin();
+}
+
+/**
+ * @brief simulationThread::getDuration
+ *        Return the experiment duration
+ *
+ */
+double simulationThread::getDuration()
+{
+    return mVpz->project().experiment().duration();
+}
+
+/**
+ * @brief simulationThread::getCurrentTime
+ *        Return the current experiment time
+ *
  */
 double simulationThread::getCurrentTime()
 {

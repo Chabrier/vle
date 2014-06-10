@@ -12,6 +12,9 @@
         <file>resources/control_play_blue.png</file>
         <file>resources/control_pause_blue.png</file>
         <file>resources/disk.png</file>
+        <file>resources/vpz_inport.png</file>
+        <file>resources/bricks.png</file>
+        <file>resources/cog.png</file>
     </qresource>
     <qresource prefix="/logo">
         <file>resources/logo.png</file>
