@@ -1,6 +1,8 @@
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
+set(QT_USE_QTXML TRUE)
+
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
 
@@ -17,6 +19,9 @@ include_directories(${XMLDEPS_INCLUDE_DIRS})
     link_directories(${VLEDEPS_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
   endif (WIN32)
 
+#
+# Add Intl/Gettext lib
+#
 if (WIN32)
   set(INTL_LIB "intl")
 else (WIN32)

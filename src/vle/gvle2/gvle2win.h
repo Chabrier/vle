@@ -7,6 +7,7 @@
 #include <QTranslator>
 #include <QTreeWidgetItem>
 #include <QActionGroup>
+#include <QPluginLoader>
 #include <QSettings>
 #include <QTimer>
 
@@ -18,6 +19,8 @@
 #include <vle/utils/Package.hpp>
 #include <vle/utils/Preferences.hpp>
 #endif
+
+#define QTVPZ 1
 
 namespace Ui {
 class GVLE2Win;
@@ -65,9 +68,9 @@ private:
     vle::vpz::Vpz    * mVpz;
     bool               mSimOpened;
     QActionGroup     * mMenuSimGroup;
-    QMap <QString, QString>    mSimulators;
-    QString            mSimulator;
+    QList <QString>    mSimulators;
     PluginSimulator  * mCurrentSim;
+    QPluginLoader    * mCurrentSimPlugin;
 
 protected:
     void openProject(QString pathName);
@@ -81,6 +84,7 @@ private:
     void treeProjectUpdate(QTreeWidgetItem *base, QString folderName);
 private:
     vle::utils::Package mCurrPackage;
+    QString             mProjectPath;
 };
 
 #endif // GVLE2WIN_H
