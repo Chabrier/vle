@@ -40,6 +40,8 @@ public:
     void route();
     bool isLinkedWith(vleVpzModel *model);
     int  getMaxX() { return mMaxX; }
+    void setHighlight(bool hl = true);
+    bool isHighlighted();
 
 public:
     QPolygon mLines;
@@ -51,6 +53,7 @@ private:
     vleVpzPort  *mDestPort;
     int          mMaxX;
     int          mMaxY;
+    bool         mHighlight;
 };
 
 #endif // VLEVPZCONN_H

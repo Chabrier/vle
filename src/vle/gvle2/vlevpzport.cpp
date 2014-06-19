@@ -76,6 +76,19 @@ vleVpzModel *vleVpzPort::getModel()
 }
 
 /**
+ * @brief vleVpzPort::getTopModel
+ *        Get the current maximized model
+ *
+ */
+vleVpzModel *vleVpzPort::getTopModel()
+{
+    vleVpzModel *pm = getModel();
+    while(pm->isMaximized() == false)
+        pm = (vleVpzModel *)pm->parent();
+    return pm;
+}
+
+/**
  * @brief vleVpzPort::getName
  *        Getter for the "name" property
  *
@@ -151,9 +164,6 @@ void vleVpzPort::setConn(vleVpzConn *conn)
 {
     if (conn == 0)
         return;
-
-    if (mConnections.length())
-        qDebug() << this->getModel()->getName() << "::" << this->mName << " multiple conn";
 
     if ( ! mConnections.contains(conn))
         mConnections.append(conn);
@@ -339,6 +349,13 @@ void vleVpzPort::enterEvent (QEvent *event)
 
     if (! mIsSelected)
         mTitle.setStyleSheet("color: rgb(0, 127, 0);");
+
+    // Highlight the associated connections
+    for (int i = 0; i < mConnections.length(); i++)
+        mConnections.at(i)->setHighlight(true);
+
+    // Refresh the (top) display
+    getTopModel()->repaint();
 }
 
 /**
@@ -352,6 +369,13 @@ void vleVpzPort::leaveEvent (QEvent *event)
 
     if (! mIsSelected)
         mTitle.setStyleSheet("color: rgb(0, 0, 255);");
+
+    // Associated connections ar no more highlighted
+    for (int i = 0; i < mConnections.length(); i++)
+        mConnections.at(i)->setHighlight(false);
+
+    // Refresh the (top) display
+    getTopModel()->repaint();
 }
 
 /**
