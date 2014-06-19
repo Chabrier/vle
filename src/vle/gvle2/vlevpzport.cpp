@@ -152,6 +152,11 @@ vleVpzPort::portType vleVpzPort::getType()
  */
 vleVpzConn* vleVpzPort::getConn()
 {
+    // If the port has no-connection, return NULL
+    if (mConnections.length() == 0)
+        return 0;
+
+    // Return the first knoiwn connection
     return mConnections.at(0);
 }
 
