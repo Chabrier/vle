@@ -24,6 +24,7 @@ vleVpzConn::vleVpzConn(vleVpzModel *model)
     mDestPort   = 0;
     mMaxX = 0;
     mMaxY = 0;
+    mHighlight = false;
 }
 
 /**
@@ -226,6 +227,26 @@ bool vleVpzConn::isLinkedWith(vleVpzModel *model)
         return true;
 
     return false;
+}
+
+/**
+ * @brief vleVpzConn::setHighlight
+ *        Mark/unmark the connection as highlighted
+ *
+ */
+void vleVpzConn::setHighlight(bool hl)
+{
+    mHighlight = hl;
+}
+
+/**
+ * @brief vleVpzConn::isHighlighted
+ *        Test the connection is currently highlighted
+ *
+ */
+bool vleVpzConn::isHighlighted()
+{
+    return mHighlight;
 }
 
 /**

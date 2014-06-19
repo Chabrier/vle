@@ -1714,28 +1714,36 @@ void vleVpzModel::portConnect(vleVpzPort *port)
     {
         vleVpzConn *newConn = 0;
 
-        // Instanciate a new Connection object
-        newConn = new vleVpzConn(this);
-
-        if (mPortOutSel->getModel() == this)
-            newConn->setType(vleVpzConn::In);
-        else if (mPortInSel->getModel() == this)
-            newConn->setType(vleVpzConn::Out);
-        else
-            newConn->setType(vleVpzConn::Internal);
-
-        newConn->setSource     (mPortOutSel);
-        newConn->setDestination(mPortInSel);
-
-        if (newConn->isValid())
+        if ( (mPortInSel->getModel()  == this) &&
+             (mPortOutSel->getModel() == this) )
         {
-            newConn->route();
-            mConnections.append(newConn);
-            // Refresh widget to show new connection
-            repaint();
+            //
         }
         else
-            delete newConn;
+        {
+            // Instanciate a new Connection object
+            newConn = new vleVpzConn(this);
+
+            if (mPortOutSel->getModel() == this)
+                newConn->setType(vleVpzConn::In);
+            else if (mPortInSel->getModel() == this)
+                newConn->setType(vleVpzConn::Out);
+            else
+                newConn->setType(vleVpzConn::Internal);
+
+            newConn->setSource     (mPortOutSel);
+            newConn->setDestination(mPortInSel);
+
+            if (newConn->isValid())
+            {
+                newConn->route();
+                mConnections.append(newConn);
+                // Refresh widget to show new connection
+                repaint();
+            }
+            else
+                delete newConn;
+        }
 
         // De-select ports after connection established
         mPortInSel->select(false);
@@ -1745,10 +1753,13 @@ void vleVpzModel::portConnect(vleVpzPort *port)
     }
 }
 
+/**
+ * @brief vleVpzModel::portDisconnect
+ *        Remove the connection(s) associated to a port
+ *
+ */
 void vleVpzModel::portDisconnect(vleVpzPort *port)
 {
-    qDebug() << "vleVpzModel::portDisconnect() " << mName << " port=" << port->getName();
-
     // Connections can be removed only into the maximized model
     if ( ! mIsMaximized)
     {
@@ -1785,27 +1796,37 @@ void vleVpzModel::contextMenu(const QPoint & pos, vleVpzPort *port)
     // Get the global mouse position
     QPoint globalPos = mapToGlobal(pos);
 
-    if (isMaximized())
-        return;
-
     QAction *lastAction;
 
     QMenu ctxMenu;
-    lastAction = ctxMenu.addAction(tr("Add input port"));  lastAction->setData(1);
-    lastAction = ctxMenu.addAction(tr("Add output port")); lastAction->setData(2);
-    lastAction = ctxMenu.addAction(tr("Remove port"));     lastAction->setData(3);
-    if (port == 0)
-        lastAction->setEnabled(false);
-    ctxMenu.addSeparator();
-    lastAction = ctxMenu.addAction(tr("Connect"));    lastAction->setData(11);
-    if (port == 0)
-        lastAction->setEnabled(false);
-    lastAction = ctxMenu.addAction(tr("Disconnect")); lastAction->setData(12);
-    if ((port == 0) || (port->getConn() == 0))
-        lastAction->setEnabled(false);
-    lastAction = ctxMenu.addAction(tr("Rename"));     lastAction->setData(13);
-    if (port == 0)
-        lastAction->setEnabled(false);
+
+    if (isMaximized())
+    {
+        lastAction = ctxMenu.addAction(tr("Connect"));    lastAction->setData(11);
+        if (port == 0)
+            lastAction->setEnabled(false);
+        lastAction = ctxMenu.addAction(tr("Disconnect")); lastAction->setData(12);
+        if ((port == 0) || (port->getConn() == 0))
+            lastAction->setEnabled(false);
+    }
+    else
+    {
+        lastAction = ctxMenu.addAction(tr("Add input port"));  lastAction->setData(1);
+        lastAction = ctxMenu.addAction(tr("Add output port")); lastAction->setData(2);
+        lastAction = ctxMenu.addAction(tr("Remove port"));     lastAction->setData(3);
+        if (port == 0)
+            lastAction->setEnabled(false);
+        ctxMenu.addSeparator();
+        lastAction = ctxMenu.addAction(tr("Connect"));    lastAction->setData(11);
+        if (port == 0)
+            lastAction->setEnabled(false);
+        lastAction = ctxMenu.addAction(tr("Disconnect")); lastAction->setData(12);
+        if ((port == 0) || (port->getConn() == 0))
+            lastAction->setEnabled(false);
+        lastAction = ctxMenu.addAction(tr("Rename"));     lastAction->setData(13);
+        if (port == 0)
+            lastAction->setEnabled(false);
+    }
 
     QAction* selectedItem = ctxMenu.exec(globalPos);
 
@@ -1917,6 +1938,7 @@ void vleVpzModel::paintEvent(QPaintEvent *event)
     if (mConnections.length() && mIsMaximized)
     {
         QPen myPen(QColor(127,127,127), mSettingLine, Qt::SolidLine);
+        QPen hlPen(QColor(0,  127,  0), mSettingLine, Qt::SolidLine);
         QPainter pLines(this);
         pLines.setPen(myPen);
         pLines.setBrush(myBrush);
@@ -1924,7 +1946,16 @@ void vleVpzModel::paintEvent(QPaintEvent *event)
         while( connItems.hasNext() )
         {
             vleVpzConn *conn = connItems.next();
-            pLines.drawPolyline(conn->mLines);
+            if (conn->isHighlighted())
+            {
+                pLines.setPen(hlPen);
+                pLines.drawPolyline(conn->mLines);
+            }
+            else
+            {
+                pLines.setPen(myPen);
+                pLines.drawPolyline(conn->mLines);
+            }
         }
         pLines.end();
     }

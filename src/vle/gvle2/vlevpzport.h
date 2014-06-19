@@ -48,6 +48,8 @@ protected:
     void leaveEvent (QEvent     *event);
     void mousePressEvent (QMouseEvent *event);
     void updLabel();
+private:
+    vleVpzModel *getTopModel();
 
 private:
     QString  mName;
