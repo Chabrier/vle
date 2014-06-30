@@ -14,6 +14,12 @@ int main(int argc, char *argv[])
     std::string localesPath =
         vle::utils::Path::path().buildDirname(vlePrefixDir,
                                               VLE_SHARE_DIRS,"translations");
+    std::string manPath =
+        vle::utils::Path::path().buildDirname(vlePrefixDir,
+                                              VLE_SHARE_DIRS,"man");
+
+    a.setProperty("localesPath", QString(localesPath.c_str()));
+    a.setProperty("manPath",     QString(manPath.c_str()));
 
     QTranslator qtTranslator;
     result = qtTranslator.load("gvle2_" + QLocale::system().name() + ".qm", localesPath.c_str());

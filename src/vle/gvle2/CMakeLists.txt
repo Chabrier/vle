@@ -2,6 +2,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 set(QT_USE_QTXML TRUE)
+set(QT_USE_QTHELP TRUE)
 
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
@@ -21,7 +22,7 @@ include_directories(${VLE_BINARY_DIR}/src ${VLE_SOURCE_DIR}/src
   ${Boost_INCLUDE_DIRS} ${VLEDEPS_INCLUDE_DIRS} ${GVLE2_SOURCE_DIR}
   ${VLE_SOURCE_DIR}/src/apps/gvle2)
 
-SET(GVLE2_SOURCES_CPP gvle2win.cpp aboutbox.cpp help.cpp
+SET(GVLE2_SOURCES_CPP gvle2win.cpp aboutbox.cpp help.cpp helpbrowser.cpp
   filevpzview.cpp simulation.cpp widgetprojecttree.cpp logger.cpp
   vlevpz.cpp vlevpzconn.cpp vlevpzdynamic.cpp vlevpzport.cpp vpzexpcond.cpp)
 
