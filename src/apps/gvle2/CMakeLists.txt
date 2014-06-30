@@ -67,3 +67,7 @@ install(FILES "transalations/tr_en.qm" DESTINATION
   "${VLE_SHARE_DIRS}/translations" RENAME "gvle2_en_US.qm")
 install(FILES "transalations/tr_fr.qm" DESTINATION
   "${VLE_SHARE_DIRS}/translations" RENAME "gvle2_fr_FR.qm")
+install(FILES "help/gvle2_app.qch" DESTINATION
+  "${VLE_SHARE_DIRS}/man" RENAME "gvle2_app.qch")
+install(FILES "help/gvle2.qhc" DESTINATION
+  "${VLE_SHARE_DIRS}/man" RENAME "gvle2.qhc")

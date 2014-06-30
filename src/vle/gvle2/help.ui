@@ -15,7 +15,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <widget class="QTextBrowser" name="textBrowser">
+    <widget class="HelpBrowser" name="textBrowser">
      <property name="acceptDrops">
       <bool>false</bool>
      </property>
@@ -30,6 +30,13 @@ p, li { white-space: pre-wrap; }
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HelpBrowser</class>
+   <extends>QTextBrowser</extends>
+   <header>helpbrowser.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
