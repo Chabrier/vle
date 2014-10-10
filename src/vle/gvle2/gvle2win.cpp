@@ -44,6 +44,7 @@ GVLE2Win::GVLE2Win(QWidget *parent) :
     QObject::connect(ui->actionCloseProject, SIGNAL(triggered()), this, SLOT(onCloseProject()));
     QObject::connect(ui->actionQuit,         SIGNAL(triggered()), this, SLOT(onQuit()));
     QObject::connect(ui->actionConfigureProject, SIGNAL(triggered()), this, SLOT(onProjectConfigure()));
+    QObject::connect(ui->actionBuildProject, SIGNAL(triggered()), this, SLOT(onProjectBuild()));
     QObject::connect(ui->actionLaunchSimulation, SIGNAL(triggered()), this, SLOT(onLaunchSimulation()));
     QObject::connect(ui->actionSimNone,      SIGNAL(toggled(bool)),   this, SLOT(onSelectSimulator(bool)));
     QObject::connect(ui->actionHelp,         SIGNAL(triggered()), this, SLOT(onHelp()));
@@ -264,14 +265,9 @@ void GVLE2Win::onQuit()
     qApp->exit();
 }
 
-/**
- * @brief GVLE2Win::onProjectConfigure
- *        Handler for menu function : Project > Configure Project
- */
 void GVLE2Win::onProjectConfigure()
 {
     mLogger->log(tr("Project configuration started"));
-    // Open the status-bar to show logs
     statusWidgetOpen();
 
     try {
@@ -282,9 +278,8 @@ void GVLE2Win::onProjectConfigure()
         mLogger->log(tr("Project configuration failed"));
         return;
     }
-    // Disable the "Project" menu
     ui->actionConfigureProject->setEnabled(false);
-    // Init and start a periodic timer to wait execution finish
+
     mTimer = new QTimer();
     QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(projectConfigureTimer()));
     mTimer->start(50);
@@ -308,6 +303,49 @@ void GVLE2Win::projectConfigureTimer()
             mLogger->logExt(oe.c_str(), true);
         if (oo.length())
             mLogger->logExt(oo.c_str());
+    }
+}
+
+void GVLE2Win::onProjectBuild()
+{
+    mLogger->log(tr("Project compilation started"));
+    statusWidgetOpen();
+
+    try {
+        mCurrPackage.build();
+    } catch (const std::exception &e) {
+        QString logMessage = QString("%1").arg(e.what());
+        mLogger->logExt(logMessage, true);
+        mLogger->log(tr("Project compilation failed"));
+        return;
+    }
+    ui->actionBuildProject->setEnabled(false);
+
+    mTimer = new QTimer();
+    QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(projectBuildTimer()));
+    mTimer->start(50);
+}
+
+void GVLE2Win::projectBuildTimer()
+{
+    if (mCurrPackage.isFinish())
+    {
+        mTimer->stop();
+        delete mTimer;
+        mLogger->log(tr("Project compilation complete"));
+        ui->actionBuildProject->setEnabled(true);
+    }
+    std::string oo;
+    std::string oe;
+    bool ret = mCurrPackage.get(&oo, &oe);
+    if (ret)
+    {
+        if(oe.length()) {
+            mLogger->logExt(oe.c_str(), true);
+        }
+        if (oo.length()) {
+            mLogger->logExt(oo.c_str());
+        }
     }
 }
 

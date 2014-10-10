@@ -48,6 +48,7 @@ private slots:
     void onCloseProject();
     void onQuit();
     void onProjectConfigure();
+    void onProjectBuild();
     void onLaunchSimulation();
     void onSelectSimulator(bool isChecked);
     void onHelp();
@@ -57,6 +58,8 @@ private slots:
     void onStatusToggle();
     void onTreeDblClick(QTreeWidgetItem *item, int column);
     void projectConfigureTimer();
+    void projectBuildTimer();
+
 
 private:
     Ui::GVLE2Win *ui;

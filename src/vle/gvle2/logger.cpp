@@ -20,6 +20,7 @@ void Logger::log(QString message)
 
     QString logLine = logTime + message;
     mWidget->appendPlainText(logLine);
+    mWidget->moveCursor(QTextCursor::End);
 }
 
 void Logger::logExt(QString message, bool isError)
@@ -33,4 +34,5 @@ void Logger::logExt(QString message, bool isError)
     else
         logLine = "<font color=#0000FF><pre>" + message + "</pre></font>";
     mWidget->appendHtml(logLine);
+    mWidget->moveCursor(QTextCursor::End);
 }
