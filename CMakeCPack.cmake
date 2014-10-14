@@ -106,6 +106,11 @@ if (CPACK_GENERATOR MATCHES "NSIS")
   install(FILES "${VLE_QT_PATH}\\\\QtCored4.dll" DESTINATION bin)
   install(FILES "${VLE_QT_PATH}\\\\QtGuid4.dll"  DESTINATION bin)
   install(FILES "${VLE_QT_PATH}\\\\QtXmld4.dll"  DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtHelp4.dll"  DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtCLucene4.dll"  DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtSql4.dll"  DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\QtNetwork4.dll"  DESTINATION bin)
+  install(FILES "${VLE_QT_PATH}\\\\mingwm10.dll"  DESTINATION bin)
   install(FILES "${VLE_QT_PATH}\\\\qwt.dll"      DESTINATION bin)
   install(FILES "${VLE_QT_PATH}\\\\Qwtd.dll"     DESTINATION bin)
 
@@ -131,7 +136,7 @@ if (CPACK_GENERATOR MATCHES "NSIS")
 
   install(DIRECTORY "${VLE_CMAKE_PATH}/bin" DESTINATION CMake)
   install(DIRECTORY "${VLE_CMAKE_PATH}/share" DESTINATION CMake)
-  
+
   set(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}/share/pixmaps\\\\vle.ico")
   set(CPACK_NSIS_MUI_UNIICON "${PROJECT_SOURCE_DIR}/share/pixmaps\\\\vle.ico")
   set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/share/pixmaps\\\\logo.bmp")
