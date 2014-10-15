@@ -73,7 +73,7 @@ if (CPACK_GENERATOR MATCHES "NSIS")
 
   set(CMAKE_MODULE_PATH "share")
   set(VLE_QT_PATH CACHE PATH "Qt path")
-  set(VLE_QT_INCLUDE_PATH CACHE PATH "Qt include path")
+  set(VLE_QT_INSTALL_PATH CACHE PATH "Qt install path")
   set(VLE_MINGW_PATH CACHE PATH "Mingw Boost directory")
   set(VLE_BOOST_INCLUDE_PATH CACHE PATH "Boost include path")
   set(VLE_BOOST_LIBRARIES_PATH CACHE PATH "Boost libraries path")
@@ -114,7 +114,8 @@ if (CPACK_GENERATOR MATCHES "NSIS")
   install(FILES "${VLE_QT_PATH}\\\\qwt.dll"      DESTINATION bin)
   install(FILES "${VLE_QT_PATH}\\\\Qwtd.dll"     DESTINATION bin)
 
-  install(DIRECTORY "${VLE_QT_INCLUDE_PATH}/include/" DESTINATION include/Qt)
+  install(DIRECTORY "${VLE_QT_INSTALL_PATH}/include/" DESTINATION include/Qt)
+  install(DIRECTORY "${VLE_QT_INSTALL_PATH}/include/" DESTINATION Qt)
 
   install(DIRECTORY "${VLE_BOOST_INCLUDE_PATH}/boost" DESTINATION include)
   install(DIRECTORY "${VLE_BOOST_LIBRARIES_PATH}/" DESTINATION bin
