@@ -39,6 +39,7 @@ protected:
     void showEvent(QShowEvent *event);
 
 private slots:
+    void onNewProject();
     void onOpenProject();
     void onProjectRecent1();
     void onProjectRecent2();
@@ -76,6 +77,7 @@ private:
     QPluginLoader    * mCurrentSimPlugin;
 
 protected:
+    void newProject(QString pathName);
     void openProject(QString pathName);
 private:
     void menuRecentProjectRefresh();

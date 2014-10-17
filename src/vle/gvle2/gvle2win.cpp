@@ -12,7 +12,6 @@
 #include "simulation.h"
 #include "vlevpz.h"
 #include <QtDebug>
-#include <iostream>
 
 GVLE2Win::GVLE2Win(QWidget *parent) :
     QMainWindow(parent),
@@ -35,6 +34,7 @@ GVLE2Win::GVLE2Win(QWidget *parent) :
     menuRecentProjectRefresh();
 
     // Connect menubar handlers
+    QObject::connect(ui->actionNewProject,  SIGNAL(triggered()), this, SLOT(onNewProject()));
     QObject::connect(ui->actionOpenProject,  SIGNAL(triggered()), this, SLOT(onOpenProject()));
     QObject::connect(ui->actionRecent1,      SIGNAL(triggered()), this, SLOT(onProjectRecent1()));
     QObject::connect(ui->actionRecent2,      SIGNAL(triggered()), this, SLOT(onProjectRecent2()));
@@ -145,6 +145,23 @@ void GVLE2Win::loadSimulationPluggins()
 
 /**
  * @brief GVLE2Win::onOpenProject
+ *        Handler for menu function : File > New Project
+ */
+void GVLE2Win::onNewProject()
+{
+    QFileDialog FileChooserDialog(this);
+
+    FileChooserDialog.setFileMode(QFileDialog::AnyFile);
+    FileChooserDialog.setOptions(QFileDialog::ShowDirsOnly);
+    FileChooserDialog.setLabelText(QFileDialog::LookIn,
+            "Choose a directory");
+    FileChooserDialog.setLabelText(QFileDialog::FileName,
+            "Name of the VLE project");
+    if (FileChooserDialog.exec())
+        newProject(FileChooserDialog.selectedFiles().first());
+}
+/**
+ * @brief GVLE2Win::onOpenProject
  *        Handler for menu function : File > Open Project
  */
 void GVLE2Win::onOpenProject()
@@ -187,6 +204,39 @@ void GVLE2Win::onProjectRecent5()
 }
 
 /**
+ * @brief GVLE2Win::newProject
+ *        Handler for menu function : File > New Project
+ */
+void GVLE2Win::newProject(QString pathName)
+{
+    QDir    dir(pathName);
+    std::string basename = dir.dirName().toStdString ();
+
+    if (mOpenedPackage)
+        onCloseProject();
+    mLogger->log(QString("New Project %1").arg(dir.dirName()));
+
+    // Update window title
+    setWindowTitle("GVLE - " + dir.dirName());
+
+    dir.cdUp();
+    QDir::setCurrent( dir.path() );
+    mCurrPackage.select(basename);
+    mCurrPackage.create();
+    treeProjectUpdate();
+
+    // Update the recent projects
+    menuRecentProjectUpdate(pathName);
+    menuRecentProjectRefresh();
+
+    ui->actionCloseProject->setEnabled(true);
+    ui->menuProject->setEnabled(true);
+
+    mOpenedPackage = true;
+    mProjectPath = dir.dirName();
+}
+
+/**
  * @brief GVLE2Win::openProject
  *        Handler for menu function : File > Open Project
  */
@@ -219,6 +269,8 @@ void GVLE2Win::openProject(QString pathName)
     mOpenedPackage = true;
     mProjectPath = dir.dirName();
 }
+
+
 
 /**
  * @brief GVLE2Win::onCloseProject
