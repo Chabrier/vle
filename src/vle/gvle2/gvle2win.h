@@ -50,6 +50,7 @@ private slots:
     void onQuit();
     void onProjectConfigure();
     void onProjectBuild();
+    void projectInstall();
     void onLaunchSimulation();
     void onSelectSimulator(bool isChecked);
     void onHelp();
@@ -60,6 +61,7 @@ private slots:
     void onTreeDblClick(QTreeWidgetItem *item, int column);
     void projectConfigureTimer();
     void projectBuildTimer();
+    void projectInstallTimer();
 
 
 private:

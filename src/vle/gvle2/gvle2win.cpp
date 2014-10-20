@@ -380,24 +380,78 @@ void GVLE2Win::onProjectBuild()
 
 void GVLE2Win::projectBuildTimer()
 {
-    if (mCurrPackage.isFinish())
-    {
-        mTimer->stop();
-        delete mTimer;
-        mLogger->log(tr("Project compilation complete"));
-        ui->actionBuildProject->setEnabled(true);
-    }
-    std::string oo;
-    std::string oe;
-    bool ret = mCurrPackage.get(&oo, &oe);
-    if (ret)
-    {
+    std::string oo, oe;
+
+    if (mCurrPackage.get(&oo, &oe)) {
         if(oe.length()) {
             mLogger->logExt(oe.c_str(), true);
         }
         if (oo.length()) {
             mLogger->logExt(oo.c_str());
         }
+    }
+
+    if (mCurrPackage.isFinish()) {
+        mTimer->stop();
+        delete mTimer;
+        if (mCurrPackage.get(&oo, &oe)) {
+            if(oe.length()) {
+                mLogger->logExt(oe.c_str(), true);
+            }
+            if (oo.length()) {
+                mLogger->logExt(oo.c_str());
+            }
+        }
+        if (mCurrPackage.isSuccess()) {
+            projectInstall();
+            mLogger->log(tr("Project compilation complete"));
+        } else {
+            mLogger->log(tr("Project compilation failed"));
+        }
+        ui->actionBuildProject->setEnabled(true);
+    }
+}
+
+void GVLE2Win::projectInstall()
+{
+    mLogger->log(tr("Project installation started"));
+
+    try {
+        mCurrPackage.install();
+    } catch (const std::exception& e) {
+        QString logMessage = QString("%1").arg(e.what());
+        mLogger->logExt(logMessage, true);
+        mLogger->log(tr("Project installation failed"));
+        return;
+    }
+
+    mTimer = new QTimer();
+    QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(projectInstallTimer()));
+    mTimer->start(50);
+}
+
+void GVLE2Win::projectInstallTimer()
+{
+    std::string oo, oe;
+
+    if (mCurrPackage.get(&oo, &oe)) {
+        if(oe.length()) {
+            mLogger->logExt(oe.c_str(), true);
+        }
+        if (oo.length()) {
+            mLogger->logExt(oo.c_str());
+        }
+    }
+
+    if (mCurrPackage.isFinish()) {
+        mTimer->stop();
+        delete mTimer;
+        if (mCurrPackage.isSuccess()) {
+            mLogger->log(tr("Project installation complete"));
+        } else {
+            mLogger->log(tr("Project installation failed"));
+        }
+        ui->actionBuildProject->setEnabled(true);
     }
 }
 
