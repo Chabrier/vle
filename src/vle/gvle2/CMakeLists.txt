@@ -37,7 +37,7 @@ QT4_WRAP_UI(simulationrtool_h simulationrtool.ui)
 
 SET(GVLE2_SOURCES_HPP ${ui_gvle2win_h} ${aboutbox_h} ${help_h}
   ${filevpzview_h} ${filevpztooltip_h} ${filevpzrtool_h}
-  ${simulationview_h} ${simulationrtool_h} simulation.h logger.h 
+  ${simulationview_h} ${simulationrtool_h} simulation.h logger.h
   plugin_sim.h
   vlevpz.h vlevpzconn.h vlevpzdynamic.h vlevpzport.h vpzexpcond.h )
 
@@ -76,3 +76,26 @@ install(FILES ${GVLE2_SOURCES_HPP}
 
 install(TARGETS gvle2lib RUNTIME DESTINATION bin LIBRARY DESTINATION
   lib ARCHIVE DESTINATION lib)
+
+#
+# Configure the file gvle.pc.in to produce in the binary directory a
+# filled pkg-config script gvle.pc.
+#
+
+if (WIN32)
+  set(VLE_PKGCONFIG_PREFIXPATH "/target")
+  set(VLE_PKGCONFIG_BOOSTINCLUDE_DIRS "\${includedir}")
+  set(VLE_PKGCONFIG_LIBDIR "bin")
+  set(VLE_GVLE_LIBRARY "-lgvle2-${VLE_VERSION_SHORT}")
+else()
+  set(VLE_PKGCONFIG_PREFIXPATH "${CMAKE_INSTALL_PREFIX}")
+  set(VLE_PKGCONFIG_BOOSTINCLUDE_DIRS "${Boost_INCLUDE_DIRS}")
+  set(VLE_PKGCONFIG_LIBDIR "lib")
+  set(VLE_GVLE_LIBRARY "")
+endif()
+
+configure_file(gvle2.pc.in
+  ${VLE_BINARY_DIR}/src/vle/gvle2-${VLE_VERSION_SHORT}.pc @ONLY)
+
+install(FILES ${VLE_BINARY_DIR}/src/vle/gvle2-${VLE_VERSION_SHORT}.pc
+  DESTINATION lib/pkgconfig)

@@ -12,7 +12,6 @@
 #include "simulation.h"
 #include "vlevpz.h"
 #include <QtDebug>
-#include <iostream>
 
 GVLE2Win::GVLE2Win(QWidget *parent) :
     QMainWindow(parent),
@@ -35,6 +34,7 @@ GVLE2Win::GVLE2Win(QWidget *parent) :
     menuRecentProjectRefresh();
 
     // Connect menubar handlers
+    QObject::connect(ui->actionNewProject,  SIGNAL(triggered()), this, SLOT(onNewProject()));
     QObject::connect(ui->actionOpenProject,  SIGNAL(triggered()), this, SLOT(onOpenProject()));
     QObject::connect(ui->actionRecent1,      SIGNAL(triggered()), this, SLOT(onProjectRecent1()));
     QObject::connect(ui->actionRecent2,      SIGNAL(triggered()), this, SLOT(onProjectRecent2()));
@@ -44,6 +44,7 @@ GVLE2Win::GVLE2Win(QWidget *parent) :
     QObject::connect(ui->actionCloseProject, SIGNAL(triggered()), this, SLOT(onCloseProject()));
     QObject::connect(ui->actionQuit,         SIGNAL(triggered()), this, SLOT(onQuit()));
     QObject::connect(ui->actionConfigureProject, SIGNAL(triggered()), this, SLOT(onProjectConfigure()));
+    QObject::connect(ui->actionBuildProject, SIGNAL(triggered()), this, SLOT(onProjectBuild()));
     QObject::connect(ui->actionLaunchSimulation, SIGNAL(triggered()), this, SLOT(onLaunchSimulation()));
     QObject::connect(ui->actionSimNone,      SIGNAL(toggled(bool)),   this, SLOT(onSelectSimulator(bool)));
     QObject::connect(ui->actionHelp,         SIGNAL(triggered()), this, SLOT(onHelp()));
@@ -144,6 +145,23 @@ void GVLE2Win::loadSimulationPluggins()
 
 /**
  * @brief GVLE2Win::onOpenProject
+ *        Handler for menu function : File > New Project
+ */
+void GVLE2Win::onNewProject()
+{
+    QFileDialog FileChooserDialog(this);
+
+    FileChooserDialog.setFileMode(QFileDialog::AnyFile);
+    FileChooserDialog.setOptions(QFileDialog::ShowDirsOnly);
+    FileChooserDialog.setLabelText(QFileDialog::LookIn,
+            "Choose a directory");
+    FileChooserDialog.setLabelText(QFileDialog::FileName,
+            "Name of the VLE project");
+    if (FileChooserDialog.exec())
+        newProject(FileChooserDialog.selectedFiles().first());
+}
+/**
+ * @brief GVLE2Win::onOpenProject
  *        Handler for menu function : File > Open Project
  */
 void GVLE2Win::onOpenProject()
@@ -186,6 +204,39 @@ void GVLE2Win::onProjectRecent5()
 }
 
 /**
+ * @brief GVLE2Win::newProject
+ *        Handler for menu function : File > New Project
+ */
+void GVLE2Win::newProject(QString pathName)
+{
+    QDir    dir(pathName);
+    std::string basename = dir.dirName().toStdString ();
+
+    if (mOpenedPackage)
+        onCloseProject();
+    mLogger->log(QString("New Project %1").arg(dir.dirName()));
+
+    // Update window title
+    setWindowTitle("GVLE - " + dir.dirName());
+
+    dir.cdUp();
+    QDir::setCurrent( dir.path() );
+    mCurrPackage.select(basename);
+    mCurrPackage.create();
+    treeProjectUpdate();
+
+    // Update the recent projects
+    menuRecentProjectUpdate(pathName);
+    menuRecentProjectRefresh();
+
+    ui->actionCloseProject->setEnabled(true);
+    ui->menuProject->setEnabled(true);
+
+    mOpenedPackage = true;
+    mProjectPath = dir.dirName();
+}
+
+/**
  * @brief GVLE2Win::openProject
  *        Handler for menu function : File > Open Project
  */
@@ -218,6 +269,8 @@ void GVLE2Win::openProject(QString pathName)
     mOpenedPackage = true;
     mProjectPath = dir.dirName();
 }
+
+
 
 /**
  * @brief GVLE2Win::onCloseProject
@@ -264,14 +317,9 @@ void GVLE2Win::onQuit()
     qApp->exit();
 }
 
-/**
- * @brief GVLE2Win::onProjectConfigure
- *        Handler for menu function : Project > Configure Project
- */
 void GVLE2Win::onProjectConfigure()
 {
     mLogger->log(tr("Project configuration started"));
-    // Open the status-bar to show logs
     statusWidgetOpen();
 
     try {
@@ -282,9 +330,8 @@ void GVLE2Win::onProjectConfigure()
         mLogger->log(tr("Project configuration failed"));
         return;
     }
-    // Disable the "Project" menu
     ui->actionConfigureProject->setEnabled(false);
-    // Init and start a periodic timer to wait execution finish
+
     mTimer = new QTimer();
     QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(projectConfigureTimer()));
     mTimer->start(50);
@@ -308,6 +355,103 @@ void GVLE2Win::projectConfigureTimer()
             mLogger->logExt(oe.c_str(), true);
         if (oo.length())
             mLogger->logExt(oo.c_str());
+    }
+}
+
+void GVLE2Win::onProjectBuild()
+{
+    mLogger->log(tr("Project compilation started"));
+    statusWidgetOpen();
+
+    try {
+        mCurrPackage.build();
+    } catch (const std::exception &e) {
+        QString logMessage = QString("%1").arg(e.what());
+        mLogger->logExt(logMessage, true);
+        mLogger->log(tr("Project compilation failed"));
+        return;
+    }
+    ui->actionBuildProject->setEnabled(false);
+
+    mTimer = new QTimer();
+    QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(projectBuildTimer()));
+    mTimer->start(50);
+}
+
+void GVLE2Win::projectBuildTimer()
+{
+    std::string oo, oe;
+
+    if (mCurrPackage.get(&oo, &oe)) {
+        if(oe.length()) {
+            mLogger->logExt(oe.c_str(), true);
+        }
+        if (oo.length()) {
+            mLogger->logExt(oo.c_str());
+        }
+    }
+
+    if (mCurrPackage.isFinish()) {
+        mTimer->stop();
+        delete mTimer;
+        if (mCurrPackage.get(&oo, &oe)) {
+            if(oe.length()) {
+                mLogger->logExt(oe.c_str(), true);
+            }
+            if (oo.length()) {
+                mLogger->logExt(oo.c_str());
+            }
+        }
+        if (mCurrPackage.isSuccess()) {
+            projectInstall();
+            mLogger->log(tr("Project compilation complete"));
+        } else {
+            mLogger->log(tr("Project compilation failed"));
+        }
+        ui->actionBuildProject->setEnabled(true);
+    }
+}
+
+void GVLE2Win::projectInstall()
+{
+    mLogger->log(tr("Project installation started"));
+
+    try {
+        mCurrPackage.install();
+    } catch (const std::exception& e) {
+        QString logMessage = QString("%1").arg(e.what());
+        mLogger->logExt(logMessage, true);
+        mLogger->log(tr("Project installation failed"));
+        return;
+    }
+
+    mTimer = new QTimer();
+    QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(projectInstallTimer()));
+    mTimer->start(50);
+}
+
+void GVLE2Win::projectInstallTimer()
+{
+    std::string oo, oe;
+
+    if (mCurrPackage.get(&oo, &oe)) {
+        if(oe.length()) {
+            mLogger->logExt(oe.c_str(), true);
+        }
+        if (oo.length()) {
+            mLogger->logExt(oo.c_str());
+        }
+    }
+
+    if (mCurrPackage.isFinish()) {
+        mTimer->stop();
+        delete mTimer;
+        if (mCurrPackage.isSuccess()) {
+            mLogger->log(tr("Project installation complete"));
+        } else {
+            mLogger->log(tr("Project installation failed"));
+        }
+        ui->actionBuildProject->setEnabled(true);
     }
 }
 

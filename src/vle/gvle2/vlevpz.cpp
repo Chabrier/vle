@@ -29,6 +29,10 @@ vleVpz::vleVpz(const QString &filename)
     mFilename = filename;
 
     xReadDom();
+
+    if (!mRootModel){
+        mRootModel = new vleVpzModel();
+    }
 }
 QString vleVpz::getFilename()
 {

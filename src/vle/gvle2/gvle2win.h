@@ -39,6 +39,7 @@ protected:
     void showEvent(QShowEvent *event);
 
 private slots:
+    void onNewProject();
     void onOpenProject();
     void onProjectRecent1();
     void onProjectRecent2();
@@ -48,6 +49,8 @@ private slots:
     void onCloseProject();
     void onQuit();
     void onProjectConfigure();
+    void onProjectBuild();
+    void projectInstall();
     void onLaunchSimulation();
     void onSelectSimulator(bool isChecked);
     void onHelp();
@@ -57,6 +60,9 @@ private slots:
     void onStatusToggle();
     void onTreeDblClick(QTreeWidgetItem *item, int column);
     void projectConfigureTimer();
+    void projectBuildTimer();
+    void projectInstallTimer();
+
 
 private:
     Ui::GVLE2Win *ui;
@@ -73,6 +79,7 @@ private:
     QPluginLoader    * mCurrentSimPlugin;
 
 protected:
+    void newProject(QString pathName);
     void openProject(QString pathName);
 private:
     void menuRecentProjectRefresh();
