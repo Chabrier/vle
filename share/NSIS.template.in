@@ -837,9 +837,12 @@ Section "-Core installation"
   ;to manage the qt install
   FileOpen $0 "$INSTDIR\Qt\4.8.5\bin\qt.conf" w
 
+!define TMPATH $INSTDIR
+${StrReplace} $TMPATH "\" "\\" $TMPATH
+
   ;write the string "hello world!" to the output file
-  FileWrite $0 "[Paths]"
-  FileWrite $0 "prefix = $INSTDIR\\Qt\\4.8.5"
+  FileWrite $0 "[Paths]\n"
+  FileWrite $0 "prefix = $TMPATH\\Qt\\4.8.5"
 
   ; close the file
   FileClose $0
