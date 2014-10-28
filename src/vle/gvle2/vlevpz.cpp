@@ -176,7 +176,8 @@ vpzExpCond * vleVpz::getCondition(QString name)
 void vleVpz::save()
 {
     // Debug - use an hard-coded name to avoid original file corruption
-    QFile file(QString("%1_new.vpz").arg(mFilename));
+    //QFile file(QString("%1_new.vpz").arg(mFilename));
+    QFile file(mFilename);
     if ( ! file.exists())
     {
         if ( ! file.open(QIODevice::WriteOnly))
@@ -801,7 +802,7 @@ QString vleVpzModel::getConditionStringList()
 
 /**
  * @brief vleVpzModel::xLoadNode
- *        Load the model from the 
+ *        Load the model from the
  *
  */
 void vleVpzModel::xLoadNode(const QDomNode &node)
