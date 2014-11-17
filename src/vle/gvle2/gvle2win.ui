@@ -708,6 +708,14 @@ QPushButton:hover{background:url(:/icon/resources/arrow_up_blue.png);}</string>
     <string>Ctrl+G</string>
    </property>
   </action>
+  <action name="actionBuild_Project">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Build Project</string>
+   </property>
+  </action>
   <action name="actionProject_dependencies">
    <property name="enabled">
     <bool>false</bool>
