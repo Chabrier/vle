@@ -37,6 +37,7 @@ public:
 protected:
     void loadSimulationPluggins();
     void showEvent(QShowEvent *event);
+    void closeEvent(QCloseEvent *event);
 
 private slots:
     void onNewProject();
@@ -89,6 +90,8 @@ private:
     void statusWidgetClose();
     void treeProjectUpdate();
     void treeProjectUpdate(QTreeWidgetItem *base, QString folderName);
+    bool tabClose(int index);
+    bool closeProject();
 private:
     vle::utils::Package mCurrPackage;
     QString             mProjectPath;

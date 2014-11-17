@@ -98,6 +98,16 @@ GVLE2Win::~GVLE2Win()
     delete ui;
 }
 
+void GVLE2Win::closeEvent(QCloseEvent *event)
+{
+    if (closeProject()) {
+        event->accept();
+    } else {
+        event->ignore();
+    }
+}
+
+
 void GVLE2Win::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
@@ -212,8 +222,12 @@ void GVLE2Win::newProject(QString pathName)
     QDir    dir(pathName);
     std::string basename = dir.dirName().toStdString ();
 
-    if (mOpenedPackage)
-        onCloseProject();
+    if (mOpenedPackage) {
+        if ( not closeProject()) {
+            return;
+        }
+    }
+
     mLogger->log(QString("New Project %1").arg(dir.dirName()));
 
     // Update window title
@@ -245,8 +259,11 @@ void GVLE2Win::openProject(QString pathName)
     QDir    dir(pathName);
     std::string basename = dir.dirName().toStdString ();
 
-    if (mOpenedPackage)
-        onCloseProject();
+    if (mOpenedPackage) {
+        if ( not closeProject()) {
+            return;
+        }
+    }
 
     mLogger->log(QString("Open Project %1").arg(dir.dirName()));
 
@@ -270,14 +287,28 @@ void GVLE2Win::openProject(QString pathName)
     mProjectPath = dir.dirName();
 }
 
-
-
-/**
- * @brief GVLE2Win::onCloseProject
- *        Handler for menu function : File > Close Project
- */
-void GVLE2Win::onCloseProject()
+bool GVLE2Win::closeProject()
 {
+    for (int i = (ui->tabWidget->count() - 1); i >= 0; i--) {
+
+        QWidget *w = ui->tabWidget->widget(i);
+
+        QVariant tabType = w->property("type");
+        QVariant rtool = w->property("wTool");
+
+        if (tabType.isValid()) {
+            if (not tabClose(i)) {
+                return false;
+            }
+        }
+
+        if (rtool.isValid()) {
+            QWidget *wtool = ui->rightStack->widget( rtool.toInt() );
+            ui->rightStack->removeWidget(wtool);
+            delete wtool;
+        }
+    }
+
     // Clear the project tree
     ui->treeProject->clear();
     ui->treeProject->setColumnCount(0);
@@ -287,25 +318,15 @@ void GVLE2Win::onCloseProject()
     // Update window title
     setWindowTitle("GVLE");
 
-    int i;
-    for (i = (ui->tabWidget->count() - 1); i >= 0; i--)
-    {
-        QWidget *w = ui->tabWidget->widget(i);
-        QVariant rtool = w->property("wTool");
-        if (rtool.isValid())
-        {
-            QWidget *wtool = ui->rightStack->widget( rtool.toInt() );
-            ui->rightStack->removeWidget(wtool);
-            delete wtool;
-        }
-        QVariant tabType = w->property("type");
-        if (tabType.isValid())
-            onTabClose(i);
-    }
-
     mLogger->log(QString("Project closed"));
 
     mOpenedPackage = false;
+    return true;
+}
+
+void GVLE2Win::onCloseProject()
+{
+    closeProject();
 }
 
 /**
@@ -314,7 +335,9 @@ void GVLE2Win::onCloseProject()
  */
 void GVLE2Win::onQuit()
 {
-    qApp->exit();
+    if (closeProject()) {
+        qApp->exit();
+    }
 }
 
 void GVLE2Win::onProjectConfigure()
@@ -723,13 +746,14 @@ void GVLE2Win::onTabChange(int index)
     }
 }
 
-void GVLE2Win::onTabClose(int index)
+bool GVLE2Win::tabClose(int index)
 {
     bool isSim = false;
     QWidget *wTool = 0;
     QWidget *w = ui->tabWidget->widget(index);
-    if (w == 0)
-        return;
+    if (w == 0) {
+        return false;
+    }
 
     bool isPlugin = false;
     QVariant vIsPlugin = w->property("plugin");
@@ -739,6 +763,7 @@ void GVLE2Win::onTabClose(int index)
     if (w->property("type").toString().compare("vpz") == 0)
     {
         fileVpzView *tabVpz = (fileVpzView *)w;
+
         int useReason;
         bool allowClose = false;
         if (tabVpz->isUsed(&useReason))
@@ -748,11 +773,13 @@ void GVLE2Win::onTabClose(int index)
             {
                 msgBox.setText(tr("This tab can't be closed (used by a simulator)"));
                 msgBox.exec();
-                return;
+                return false;
             }
             if (useReason == 2)
             {
-                msgBox.setText(tr("File modified ! Save before close ?"));
+                msgBox.setText(tr("Modified file: ") +
+                               tabVpz->vpz()->getFilename() + "\n" +
+                               tr("Save before close ?"));
                 msgBox.addButton(QMessageBox::Save);
                 msgBox.addButton(QMessageBox::Discard);
                 msgBox.addButton(QMessageBox::Cancel);
@@ -773,7 +800,7 @@ void GVLE2Win::onTabClose(int index)
                       break;
                 }
                 if (! allowClose)
-                    return;
+                    return false;
             }
         }
     }
@@ -819,6 +846,12 @@ void GVLE2Win::onTabClose(int index)
         //delete mCurrentSim;
         mCurrentSim = 0;
     }
+    return true;
+}
+
+void GVLE2Win::onTabClose(int index)
+{
+    tabClose(index);
 }
 
 /* ---------- Manage the status bar ---------- */
